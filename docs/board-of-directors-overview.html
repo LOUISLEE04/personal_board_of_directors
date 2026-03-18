@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personal Board of Directors</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1c2436;
+    --border: #1f2d40;
+    --text: #e8edf5;
+    --muted: #7a8899;
+    --blue: #4f9cf9;
+    --blue-dim: #1d3a6e;
+    --green: #34d399;
+    --green-dim: #0d3326;
+    --amber: #fbbf24;
+    --amber-dim: #3d2a00;
+    --purple: #a78bfa;
+    --purple-dim: #2d1f5e;
+    --rose: #fb7185;
+    --rose-dim: #3d1020;
+    --teal: #2dd4bf;
+    --teal-dim: #0d3030;
+    --font: 'Inter', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    overflow: hidden;
+  }
+
+  /* ── PROGRESS BAR ─────────────────────────── */
+  #progress {
+    position: fixed; top: 0; left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--blue), var(--purple));
+    transition: width 0.4s ease;
+    z-index: 100;
+  }
+
+  /* ── SLIDES ───────────────────────────────── */
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 60px 80px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+  }
+  .slide.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  /* ── NAV ──────────────────────────────────── */
+  #nav {
+    position: fixed; right: 24px; top: 50%;
+    transform: translateY(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    z-index: 100;
+  }
+  #dots {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--border);
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .dot.active { background: var(--blue); transform: scale(1.5); }
+  .nav-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--muted); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; font-size: 13px;
+  }
+  .nav-btn:hover { background: var(--surface2); color: var(--text); }
+
+  /* ── SLIDE COUNTER ────────────────────────── */
+  #counter {
+    position: fixed; top: 20px; right: 28px;
+    font-size: 12px; color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    z-index: 100;
+  }
+
+  /* ── SLIDE LABEL ──────────────────────────── */
+  .slide-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--blue);
+    margin-bottom: 16px;
+  }
+
+  /* ── TYPOGRAPHY ───────────────────────────── */
+  h1 { font-size: 56px; font-weight: 800; line-height: 1.1; }
+  h2 { font-size: 36px; font-weight: 700; line-height: 1.2; }
+  h3 { font-size: 20px; font-weight: 600; }
+  p, li { font-size: 15px; line-height: 1.7; color: var(--muted); }
+  .accent-blue { color: var(--blue); }
+  .accent-green { color: var(--green); }
+  .accent-amber { color: var(--amber); }
+  .accent-purple { color: var(--purple); }
+  .accent-teal { color: var(--teal); }
+  .accent-rose { color: var(--rose); }
+
+  /* ── GRADIENT TITLE ───────────────────────── */
+  .gradient-text {
+    background: linear-gradient(135deg, var(--blue) 0%, var(--purple) 50%, var(--teal) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── CARDS ────────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+  }
+
+  /* ── AGENT CARD ───────────────────────────── */
+  .agent-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    border-left: 3px solid;
+    transition: transform 0.2s;
+  }
+  .agent-card:hover { transform: translateY(-2px); }
+  .agent-card h3 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .agent-card p { font-size: 12px; color: var(--muted); }
+
+  /* ── APP SNAPSHOT ─────────────────────────── */
+  .snapshot {
+    background: #060c16;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  .snapshot-bar {
+    background: var(--surface);
+    padding: 8px 14px;
+    font-size: 11px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .dot-r { width:10px; height:10px; border-radius:50%; background:#ff5f57; }
+  .dot-y { width:10px; height:10px; border-radius:50%; background:#ffbd2e; }
+  .dot-g { width:10px; height:10px; border-radius:50%; background:#28ca41; }
+  .snapshot-body { padding: 16px 18px; }
+  .snapshot-body .prompt { color: var(--green); }
+  .snapshot-body .key { color: var(--amber); }
+  .snapshot-body .val { color: var(--text); }
+  .snapshot-body .muted { color: var(--muted); }
+  .snapshot-body .badge {
+    display: inline-block; padding: 1px 8px; border-radius: 4px;
+    font-size: 10px; font-weight: 600; margin-right: 4px;
+  }
+  .badge-blue { background: var(--blue-dim); color: var(--blue); }
+  .badge-green { background: var(--green-dim); color: var(--green); }
+  .badge-amber { background: var(--amber-dim); color: var(--amber); }
+  .badge-purple { background: var(--purple-dim); color: var(--purple); }
+  .badge-rose { background: var(--rose-dim); color: var(--rose); }
+  .badge-teal { background: var(--teal-dim); color: var(--teal); }
+
+  /* ── TAG ──────────────────────────────────── */
+  .tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 500;
+    border: 1px solid;
+  }
+
+  /* ── GRID ─────────────────────────────────── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; width: 100%; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; width: 100%; }
+
+  /* ── STAT BOX ─────────────────────────────── */
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+  }
+  .stat-num { font-size: 48px; font-weight: 800; line-height: 1; }
+  .stat-label { font-size: 12px; color: var(--muted); margin-top: 6px; font-weight: 500; letter-spacing: 0.5px; }
+
+  /* ── FLOW ARROW ───────────────────────────── */
+  .flow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .flow-step {
+    padding: 6px 14px; border-radius: 6px;
+    font-size: 12px; font-weight: 600;
+    background: var(--surface2); border: 1px solid var(--border);
+  }
+  .flow-arrow { color: var(--muted); font-size: 16px; }
+
+  /* ── STATUS BADGE ─────────────────────────── */
+  .status { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .status-rec { background: var(--blue-dim); color: var(--blue); }
+  .status-sent { background: var(--amber-dim); color: var(--amber); }
+  .status-prog { background: var(--green-dim); color: var(--green); }
+  .status-close { background: #2a1a1a; color: #f87171; }
+
+  /* ── DIVIDER ──────────────────────────────── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+
+  /* ── SLIDE-SPECIFIC LAYOUT ────────────────── */
+  .slide-inner { width: 100%; max-width: 960px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; padding: 6px 10px; color: var(--muted); font-weight: 600; font-size: 11px; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+  td { padding: 7px 10px; color: var(--text); border-bottom: 1px solid #0d1520; vertical-align: top; }
+  td .muted-cell { color: var(--muted); font-size: 11px; }
+
+  code { font-family: var(--mono); font-size: 11px; background: var(--surface2); padding: 1px 5px; border-radius: 3px; color: var(--amber); }
+
+  .verdict-box {
+    background: linear-gradient(135deg, #0d1f10 0%, #0a1520 100%);
+    border: 1px solid var(--green);
+    border-radius: 10px;
+    padding: 16px 20px;
+  }
+
+  .pill-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* ── SLIDE 1 specific ─────────────────────── */
+  #s1 { text-align: center; }
+  #s1 .subtitle { font-size: 18px; color: var(--muted); margin-top: 14px; font-weight: 400; }
+  #s1 .tags { display: flex; gap: 10px; justify-content: center; margin-top: 32px; flex-wrap: wrap; }
+
+  /* ── SLIDE 2 specific ─────────────────────── */
+  #s2 .problem-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px 22px;
+    border-left: 3px solid var(--rose);
+  }
+  #s2 .solution-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px 22px;
+    border-left: 3px solid var(--green);
+  }
+
+  /* Scroll overrides for snapshot bodies */
+  .snapshot-body-scroll { max-height: 240px; overflow-y: auto; padding: 16px 18px; }
+  .snapshot-body-scroll::-webkit-scrollbar { width: 4px; }
+  .snapshot-body-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; align-items: start; }
+  .three-col-snap { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%; }
+
+  .icon { font-size: 20px; }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<div id="counter">1 / 11</div>
+
+<!-- ══════════════════════════════════════════════════
+     SLIDE 1 — TITLE
+═══════════════════════════════════════════════════ -->
+<div class="slide active" id="s1">
+  <div style="max-width:700px; text-align:center;">
+    <div style="margin-bottom:20px; display:flex; justify-content:center;">
+      <div style="padding:10px 20px; background:var(--surface); border:1px solid var(--border); border-radius:8px; font-size:12px; color:var(--muted); font-family:var(--mono);">
+        <span style="color:var(--green)">●</span> &nbsp;advisory-system &nbsp;·&nbsp; active
+      </div>
+    </div>
+    <h1 class="gradient-text">Personal Board<br>of Directors</h1>
+    <p class="subtitle">An AI-powered life advisory OS — built for you</p>
+
+    <div class="tags">
+      <span class="tag" style="color:var(--blue); border-color:var(--blue-dim); background:var(--blue-dim)">🔬 Deep Research</span>
+      <span class="tag" style="color:var(--green); border-color:var(--green-dim); background:var(--green-dim)">🗓 Daily Brief</span>
+      <span class="tag" style="color:var(--amber); border-color:var(--amber-dim); background:var(--amber-dim)">📌 Nudges</span>
+      <span class="tag" style="color:var(--purple); border-color:var(--purple-dim); background:var(--purple-dim)">🧠 Memory</span>
+      <span class="tag" style="color:var(--teal); border-color:var(--teal-dim); background:var(--teal-dim)">⚡ Tactical</span>
+      <span class="tag" style="color:var(--rose); border-color:var(--rose-dim); background:var(--rose-dim)">❓ Open Questions</span>
+    </div>
+
+    <div style="margin-top:40px; padding:16px 24px; background:var(--surface); border-radius:10px; border:1px solid var(--border); display:inline-block;">
+      <p style="font-size:13px; color:var(--muted);">
+        6 specialized AI agents &nbsp;·&nbsp; Persistent cross-session memory &nbsp;·&nbsp; Always context-aware
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SLIDE 2 — WHAT IS THIS?
+═══════════════════════════════════════════════════ -->
+<div class="slide" id="s2">
+  <div class="slide-inner">
+    <div class="slide-label">Overview</div>
+    <h2 style="margin-bottom:28px;">What is this system?</h2>
+    <div class="two-col">
+      <div>
+        <div class="problem-card" style="margin-bottom:14px;">
+          <h3 style="font-size:14px; color:var(--rose); margin-bottom:8px;">⚠ The Problem</h3>
+          <ul style="list-style:none; display:flex; flex-direction:column; gap:6px;">
+            <li style="font-size:13px; color:var(--muted);">• Life decisions require research across many domains</li>
+            <li style="font-size:13px; color:var(--muted);">• Advisors forget context between conversations</li>
+            <li style="font-size:13px; color:var(--muted);">• No single AI knows your full situation</li>
+            <li style="font-size:13px; color:var(--muted);">• Advice is too generic — not tailored to YOU</li>
+          </ul>
+        </div>
+        <div class="solution-card">
+          <h3 style="font-size:14px; color:var(--green); margin-bottom:8px;">✓ The Solution</h3>
+          <ul style="list-style:none; display:flex; flex-direction:column; gap:6px;">
+            <li style="font-size:13px; color:var(--muted);">• 6 specialized agents, each a domain expert</li>
+            <li style="font-size:13px; color:var(--muted);">• Memory files persist across all sessions</li>
+            <li style="font-size:13px; color:var(--muted);">• Every answer references your exact context</li>
+            <li style="font-size:13px; color:var(--muted);">• Strong opinions — not wishy-washy AI answers</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="snapshot" style="font-size:11px;">
+          <div class="snapshot-bar">
+            <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
+            <span style="margin-left:6px; font-family:var(--mono);">how-it-works</span>
+          </div>
+          <div class="snapshot-body" style="padding:16px 18px; line-height:1.9;">
+            <div><span class="prompt">user →</span> <span class="val">"Should I take the startup offer or wait for big tech?"</span></div>
+            <div style="margin-top:10px;"><span class="muted">Orchestrator classifies: </span><code>COMPLEX</code></div>
+            <div style="margin-top:8px;">
+              <div class="muted">Dispatching agents in parallel...</div>
+              <div style="margin-top:4px; display:flex; gap:6px; flex-wrap:wrap;">
+                <span class="badge badge-blue">rd-researcher</span>
+                <span class="badge badge-amber">cost-analyst</span>
+                <span class="badge badge-rose">emotional-check</span>
+                <span class="badge badge-purple">synthesizer</span>
+              </div>
+            </div>
+            <div style="margin-top:12px; border-top: 1px solid var(--border); padding-top:12px;">
+              <div class="muted">Reading memory files...</div>
+              <div style="color:var(--teal); font-size:11px; margin-top:4px;">
+                ✓ profile.md &nbsp; ✓ outreach-tracker.md &nbsp; ✓ research-log.md
+              </div>
+            </div>
+            <div style="margin-top:12px; border-top: 1px solid var(--border); padding-top:12px;">
+              <span class="muted">Verdict: </span>
+              <span style="color:var(--green); font-weight:600;">DO IT BUT</span>
+              <span class="muted"> — take the startup. Early-career optionality beats salary delta at this stage.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SLIDE 3 — THE BOARD OF DIRECTORS
+═══════════════════════════════════════════════════ -->
+<div class="slide" id="s3">
+  <div class="slide-inner">
+    <div class="slide-label">The Team</div>
+    <h2 style="margin-bottom:24px;">Your Board of Directors</h2>
+    <div class="grid-3">
+      <div class="agent-card" style="border-left-color:var(--blue);">
+        <h3 style="color:var(--blue);">🔬 Evidence Researcher</h3>
+        <p>Studies, data, peer-reviewed evidence on any topic. Health, career, psychology — goes 8–10 searches deep.</p>
+        <div style="margin-top:10px;"><code>rd-researcher</code></div>
+      </div>
+      <div class="agent-card" style="border-left-color:var(--green);">
+        <h3 style="color:var(--green);">📍 Local Life Guide</h3>
+        <p>Local events, sports leagues, social spots, seasonal activities. Your insider friend on the ground.</p>
+        <div style="margin-top:10px;"><code>pei-local</code></div>
+      </div>
+      <div class="agent-card" style="border-left-color:var(--rose);">
+        <h3 style="color:var(--rose);">💙 Social Advisor</h3>
+        <p>Dating strategy, friendships, loneliness, social confidence, relationship dynamics. Warm but brutally honest.</p>
+        <div style="margin-top:10px;"><code>emotional-check</code></div>
+      </div>
+      <div class="agent-card" style="border-left-color:var(--amber);">
+        <h3 style="color:var(--amber);">💼 Career Advisor</h3>
+        <p>CS career paths, immigration pathways, internships, university resources, resume and job strategy.</p>
+        <div style="margin-top:10px;"><code>cost-analyst</code></div>
+      </div>
+      <div class="agent-card" style="border-left-color:var(--teal);">
+        <h3 style="color:var(--teal);">🇨🇳 Chinese Internet</h3>
+        <p>Searches 知乎, 小红书, Bilibili, 百度 in Mandarin. Asian diaspora perspective. Translates back to English.</p>
+        <div style="margin-top:10px;"><code>chinese-researcher</code></div>
+      </div>
+      <div class="agent-card" style="border-left-color:var(--purple);">
+        <h3 style="color:var(--purple);">⚡ Real Talk</h3>
+        <p>The final word. Synthesizes all agents. Strong opinions, honest verdicts, specific action plans. No wishy-washy.</p>
+        <div style="margin-top:10px;"><code>synthesizer</code></div>
+      </div>
+    </div>
+    <div style="margin-top:20px; padding:12px 18px; background:var(--surface); border-radius:8px; border:1px solid var(--border);">
+      <p style="font-size:12px; color:var(--muted); text-align:center;">
+        All agents read <code>memory/profile.md</code>, <code>outreach-tracker.md</code>, and <code>research-log.md</code> before every response — no generic advice, ever.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SLIDE 4 — DEEP RESEARCH
+═══════════════════════════════════════════════════ -->
+<div class="slide" id="s4">
+  <div class="slide-inner">
+    <div class="slide-label">Feature 01</div>
+    <h2 style="margin-bottom:6px;">Deep Research <code style="font-size:18px;">/research</code></h2>
+    <p style="margin-bottom:20px; font-size:13px;">Multi-agent deep dives into any life decision — with real sources, counter-evidence, and a strong verdict.</p>
+
+    <div class="two-col">
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div class="card" style="border-left:3px solid var(--blue);">
+          <h3 style="font-size:13px; color:var(--blue); margin-bottom:6px;">Smart Dispatch</h3>
+          <p style="font-size:12px;">Classifies the question, dispatches only relevant agents. SOCIAL → emotional-check + pei-local. CAREER → cost-analyst + rd-researcher.</p>
+        </div>
+        <div class="card" style="border-left:3px solid var(--green);">
+          <h3 style="font-size:13px; color:var(--green); margin-bottom:6px;">Evidence Standards</h3>
+          <p style="font-size:12px;">Minimum 3 web searches per agent. WebFetch on key sources. All claims cited. Counter-evidence always included.</p>
+        </div>
+        <div class="card" style="border-left:3px solid var(--amber);">
+          <h3 style="font-size:13px; color:var(--amber); margin-bottom:6px;">Output Structure</h3>
+          <p style="font-size:12px;">Verdict → Key Findings → Action Plan → Open Questions → Original Prompt (verbatim). Saved to <code>research/[topic]/</code></p>
+        </div>
+      </div>
+
+      <div class="snapshot">
+        <div class="snapshot-bar">
+          <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
+          <span style="margin-left:6px;">research/startup-vs-bigtech-career-decision/final-report.md</span>
+        </div>
+        <div class="snapshot-body-scroll">
+          <div style="color:var(--amber); font-weight:600; font-size:11px; margin-bottom:8px;">## STARTUP VS BIG TECH — CAREER DECISION</div>
+          <div style="margin-bottom:8px;">
+            <span class="badge badge-amber">COMPLEX</span>
+            <span class="badge badge-blue">Career</span>
+            <span class="badge badge-green">Finance</span>
+            <span class="badge badge-purple">Personal Growth</span>
+          </div>
+          <hr>
+          <div style="margin-top:10px; margin-bottom:6px; color:var(--muted); font-size:10px; letter-spacing:1px;">VERDICT</div>
+          <div style="color:var(--green); font-weight:700;">DO IT BUT</div>
+          <div class="muted" style="margin-top:4px;">Take the startup. Early-career optionality beats salary delta. Big tech is a known quantity — this window is not.</div>
+          <hr style="margin:12px 0;">
+          <div style="color:var(--muted); font-size:10px; letter-spacing:1px; margin-bottom:6px;">KEY ACTIONS</div>
+          <div class="val" style="margin-bottom:4px;">→ Negotiate 4-year equity vest with 1-year cliff before signing</div>
+          <div class="val" style="margin-bottom:4px;">→ Clarify ownership of work — OSS policy and IP assignment clause</div>
+          <div class="val" style="margin-bottom:4px;">→ Set personal 18-month checkpoint — reassess if growth stalls</div>
+          <div class="val">→ Keep big tech pipeline warm — 1 FAANG application per quarter</div>
+          <hr style="margin:12px 0;">
+          <div style="color:var(--muted); font-size:10px; letter-spacing:1px; margin-bottom:6px;">AGENTS USED</div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <span class="badge badge-blue">rd-researcher</span>
+            <span class="badge badge-amber">cost-analyst</span>
+            <span class="badge badge-rose">emotional-check</span>
+            <span class="badge badge-purple">synthesizer</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SLIDE 5 — DAILY BRIEF
+═══════════════════════════════════════════════════ -->
+<div class="slide" id="s5">
+  <div class="slide-inner">
+    <div class="slide-label">Feature 02</div>
+    <h2 style="margin-bottom:6px;">Daily Brief <code style="font-size:18px;">/brief</code> &amp; <code style="font-size:18px;">/ai-brief</code></h2>
+    <p style="margin-bottom:20px; font-size:13px;">Personalized morning digest — top news, AI &amp; CS developments, and daily trivia. Run every morning.</p>
+
+    <div class="two-col">
+      <div class="snapshot">
+        <div class="snapshot-bar">
+          <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
+          <span style="margin-left:6px; font-family:var(--mono);">/brief — 2026-03-17</span>
+        </div>
+        <div class="snapshot-body-scroll">
+          <div style="color:var(--amber); font-weight:600; margin-bottom:10px;">🌅 Good morning. Here's your brief.</div>
+          <div style="color:var(--muted); font-size:10px; letter-spacing:1px; margin-bottom:6px;">TODAY'S TOP STORIES</div>
+          <div class="val" style="margin-bottom:6px;">📰 <strong>Fed holds rates steady</strong> — Powell signals two cuts possible in H2 2026, markets up 0.8%.</div>
+          <div class="val" style="margin-bottom:6px;">📰 <strong>Canada tech layoffs slow</strong> — Q1 2026 layoff count drops 40% vs Q1 2025. Hiring picking up in AI.</div>
+          <div class="val" style="margin-bottom:14px;">📰 <strong>Remote work rebound</strong> — 62% of Canadian tech companies now offering hybrid again after RTO backlash.</div>
+          <hr>
+          <div style="color:var(--muted); font-size:10px; letter-spacing:1px; margin-top:10px; margin-bottom:6px;">/AI-BRIEF — AI &amp; CS</div>
+          <div class="val" style="margin-bottom:6px;">🤖 <strong>New LLM model drop</strong> — extended thinking mode launched; 50% faster on code tasks.</div>
+          <div class="val" style="margin-bottom:6px;">🤖 <strong>Cursor raises $900M</strong> — now valued at $9B. AI coding tools becoming the default IDE.</div>
+          <div class="val" style="margin-bottom:14px;">🤖 <strong>Gemini 2.5</strong> — beats GPT-4o on coding benchmarks. Google back in the race.</div>
+          <hr>
+          <div style="color:var(--muted); font-size:10px; letter-spacing:1px; margin-top:10px; margin-bottom:6px;">DAILY TRIVIA</div>
+          <div class="val">Which company introduced the first commercial REST API in 2000? (MCQ picker pops up)</div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div class="card" style="border-left:3px solid var(--amber);">
+          <h3 style="font-size:13px; color:var(--amber); margin-bottom:6px;">/brief — General News</h3>
+          <p style="font-size:12px;">Top world, national, and local news curated to your context. Career-relevant stories flagged. Runs every morning.</p>
+        </div>
+        <div class="card" style="border-left:3px solid var(--blue);">
+          <h3 style="font-size:13px; color:var(--blue); margin-bottom:6px;">/ai-brief — Tech & AI</h3>
+          <p style="font-size:12px;">AI model releases, CS career news, startup funding, developer tools. Tracks what's relevant to your projects.</p>
+        </div>
+        <div class="card" style="border-left:3px solid var(--purple);">
+          <h3 style="font-size:13px; color:var(--purple); margin-bottom:6px;">MCQ Trivia Format</h3>
+          <p style="font-size:12px;">Daily knowledge question presented as an interactive multiple-choice picker — not just plain text. Tap to answer inline.</p>
+        </div>
+        <div class="card" style="border-left:3px solid var(--teal);">
+          <h3 style="font-size:13px; color:var(--teal); margin-bottom:6px;">Context-Aware</h3>
+          <p style="font-size:12px;">Brief knows your upcoming deadlines, current projects, and goals. Surfaces what's actually relevant today — not just headlines.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SLIDE 6 — NUDGES
+═══════════════════════════════════════════════════ -->
+<div class="slide" id="s6">
+  <div class="slide-inner">
+    <div class="slide-label">Feature 03</div>
+    <h2 style="margin-bottom:6px;">Nudges — Free Time Task Manager</h2>
+    <p style="margin-bottom:20px; font-size:13px;">Say "remind me to..." and it's saved silently. Say "got free time?" and the list surfaces immediately.</p>
+
+    <div class="two-col">
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div class="card" style="border-left:3px solid var(--amber);">
+          <h3 style="font-size:13px; color:var(--amber); margin-bottom:6px;">Zero Friction Capture</h3>
+          <p style="font-size:12px;">No forms, no apps. Just say it. Saved to <code>memory/nudges.md</code> silently — confirmed in one line.</p>
+        </div>
+        <div class="card" style="border-left:3px solid var(--green);">
+          <h3 style="font-size:13px; color:var(--green); margin-bottom:6px;">Priority-Ordered</h3>
+          <p style="font-size:12px;">Nudges are ordered by urgency. Deadlines surfaced first. Lowest priority items stay at the bottom until the list is clear.</p>
+        </div>
+        <div class="card" style="border-left:3px solid var(--blue);">
+          <h3 style="font-size:13px; color:var(--blue); margin-bottom:6px;">Cross-Session Persistent</h3>
+          <p style="font-size:12px;">Survives across all conversations. Never lost. Removed only when you confirm completion.</p>
+        </div>
+        <div class="flow" style="margin-top:4px;">
+          <div class="flow-step" style="font-size:11px;">"remind me to..."</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step" style="font-size:11px;">Saved to nudges.md</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step" style="font-size:11px;">"got free time?"</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-step" style="font-size:11px; color:var(--amber);">List surfaces</div>
+        </div>
+      </div>
+
+      <div class="snapshot">
+        <div class="snapshot-bar">
+          <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
+          <span style="margin-left:6px;">memory/nudges.md — 2026-03-17</span>
+        </div>
+        <div class="snapshot-body-scroll">
+          <div style="color:var(--amber); font-weight:600; margin-bottom:10px;">📌 Free Time Nudges</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Nudge</th>
+                <th>Priority</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span style="color:var(--text);">Submit internship application — Shopify</span><div class="muted-cell">Deadline today — referral contact waiting</div></td>
+                <td><span class="badge badge-rose" style="font-size:10px;">🔴 NOW</span></td>
+              </tr>
+              <tr>
+                <td><span style="color:var(--text);">Data Structures assignment 3</span><div class="muted-cell">Due 2026-03-22 — graphs + dynamic programming</div></td>
+                <td><span class="badge badge-amber" style="font-size:10px;">⚠ This week</span></td>
+              </tr>
+              <tr>
+                <td><span style="color:var(--text);">Follow up with mentor intro email</span><div class="muted-cell">Sent 2026-03-10, no reply yet — nudge due</div></td>
+                <td><span class="badge badge-amber" style="font-size:10px;">⚠ Overdue</span></td>
+              </tr>
+              <tr>
+                <td><span style="color:var(--text);">Update LinkedIn headline + About section</span><div class="muted-cell">Before any cold outreach starts</div></td>
+                <td><span class="badge badge-blue" style="font-size:10px;">📅 Soon</span></td>
+              </tr>
+              <tr>
+                <td><span style="color:var(--text);">Register for summer softball league</span><div class="muted-cell">Registration opens March 25 — spots fill fast</div></td>
+                <td><span class="badge badge-blue" style="font-size:10px;">📅 Soon</span></td>
+              </tr>
+              <tr>
+                <td><span style="color:var(--text);">Review travel credit expiry terms</span><div class="muted-cell">~$380 credit, unclear if flight must depart or just book</div></td>
+                <td><span class="badge badge-green" style="font-size:10px;">🟢 Low</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SLIDE 7 — OPEN QUESTIONS
+═══════════════════════════════════════════════════ -->
+<div class="slide" id="s7">
+  <div class="slide-inner">
+    <div class="slide-label">Feature 04</div>
+    <h2 style="margin-bottom:6px;">Open Questions</h2>
+    <p style="margin-bottom:20px; font-size:13px;">Unresolved questions that surface during research — timestamped, categorized, reviewed during memory consolidation.</p>
+
+    <div class="two-col">
+      <div class="snapshot">
+        <div class="snapshot-bar">
+          <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
+          <span style="margin-left:6px;">memory/open-questions.md</span>
+        </div>
+        <div class="snapshot-body-scroll">
+          <div style="color:var(--purple); font-weight:600; margin-bottom:10px;">❓ Active Open Questions</div>
+
+          <div style="margin-bottom:14px;">
+            <div style="font-size:10px; color:var(--muted); letter-spacing:1px; margin-bottom:4px;">PERSONAL GROWTH — 2026-03-10</div>
+            <div class="val" style="font-size:12px;">If you had to choose only one to prioritize this year — career growth, social depth, or health — which gives you the most leverage over the other two?</div>
+            <div class="muted" style="margin-top:4px; font-size:11px;">→ Source: /reflect session. Raised but not answered yet.</div>
+          </div>
+
+          <hr>
+
+          <div style="margin-bottom:14px; margin-top:12px;">
+            <div style="font-size:10px; color:var(--muted); letter-spacing:1px; margin-bottom:4px;">CAREER — 2026-03-02</div>
+            <div class="val" style="font-size:12px;">Does the startup offer include a non-compete clause? If yes, what's the scope — same industry, same geography, same role type?</div>
+            <div class="muted" style="margin-top:4px; font-size:11px;">→ Source: Startup vs Big Tech research session. Needs legal review.</div>
+          </div>
+
+          <hr>
+
+          <div style="margin-top:12px;">
+            <div style="font-size:10px; color:var(--muted); letter-spacing:1px; margin-bottom:4px;">SOCIAL — 2026-03-15</div>
+            <div class="val" style="font-size:12px;">Softball league organizer offered to add to group chat. Waiting to be added — follow up by 2026-03-22 if nothing.</div>
+            <div class="muted" style="margin-top:4px; font-size:11px;">→ Source: Outreach Tracker / local life session.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div class="card" style="border-left:3px solid var(--purple);">
+          <h3 style="font-size:13px; color:var(--purple); margin-bottom:6px;">Surfaced During Research</h3>
+          <p style="font-size:12px;">When an agent can't answer something definitively, it logs it here instead of guessing. Intellectual honesty over false confidence.</p>
+        </div>
+        <div class="card" style="border-left:3px solid var(--blue);">
+          <h3 style="font-size:13px; color:var(--blue); margin-bottom:6px;">Timestamped &amp; Categorized</h3>
+          <p style="font-size:12px;">Every question has a date and source. Questions age gracefully — can see if something has been unresolved for weeks.</p>
+        </div>
+        <div class="card" style="border-left:3px solid var(--green);">
+          <h3 style="font-size:13px; color:var(--green); margin-bottom:6px;">Reviewed Periodically</h3>
+          <p style="font-size:12px;">During <code>/memory-consolidate</code>, open questions are reviewed. Resolved ones deleted. Stale ones escalated.</p>
+        </div>
+        <div class="card" style="border-left:3px solid var(--amber);">
+          <h3 style="font-size:13px; color:var(--amber); margin-bottom:6px;">Linked to Research</h3>
+          <p style="font-size:12px;">Each question links back to the research session that generated it — full context always one click away.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SLIDE 8 — OUTREACH TRACKER
+═══════════════════════════════════════════════════ -->
+<div class="slide" id="s8">
+  <div class="slide-inner">
+    <div class="slide-label">Feature 05</div>
+    <h2 style="margin-bottom:6px;">Outreach Tracker</h2>
+    <p style="margin-bottom:20px; font-size:13px;">Every email, DM, or contact attempt — tracked with status. Never recommends something already tried or closed.</p>
+
+    <div class="two-col">
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div class="card" style="border-left:3px solid var(--green);">
+          <h3 style="font-size:13px; color:var(--green); margin-bottom:6px;">Status Flow</h3>
+          <div class="flow" style="flex-wrap:wrap; gap:6px; margin-top:6px;">
+            <span class="status status-rec">recommended</span>
+            <span class="flow-arrow">→</span>
+            <span class="status status-sent">sent</span>
+            <span class="flow-arrow">→</span>
+            <span class="status status-prog">in-progress</span>
+            <span class="flow-arrow">→</span>
+            <span class="status status-close">closed</span>
+          </div>
+        </div>
+        <div class="card" style="border-left:3px solid var(--blue);">
+          <h3 style="font-size:13px; color:var(--blue); margin-bottom:6px;">Auto-Created After Research</h3>
+          <p style="font-size:12px;">When a research session recommends "email this org", an entry is immediately created as <code>recommended</code>. System asks next session: "Did you send this?"</p>
+        </div>
+        <div class="card" style="border-left:3px solid var(--rose);">
+          <h3 style="font-size:13px; color:var(--rose); margin-bottom:6px;">Prevents Repeat Failures</h3>
+          <p style="font-size:12px;">Every agent reads outreach-tracker.md before giving advice. Closed leads are never recommended again. No wasted energy.</p>
+        </div>
+      </div>
+
+      <div class="snapshot">
+        <div class="snapshot-bar">
+          <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
+          <span style="margin-left:6px;">memory/outreach-tracker.md</span>
+        </div>
+        <div class="snapshot-body-scroll">
+          <div style="margin-bottom:12px;">
+            <div style="font-size:10px; color:var(--muted); letter-spacing:1px; margin-bottom:6px;">NETWORKING — MENTOR</div>
+            <div style="font-weight:600; color:var(--text); font-size:12px;">Sarah K. — Senior Engineer, Stripe</div>
+            <div style="font-size:11px; color:var(--muted); margin-top:2px;">Met at local tech meetup 2026-03-05. Expressed interest in coffee chat.</div>
+            <div style="font-size:11px; color:var(--muted);">Contact: LinkedIn DM sent 2026-03-08</div>
+            <div style="margin-top:6px; display:flex; gap:8px; align-items:center;">
+              <span class="status" style="background:#1a2a1a; color:#4ade80;">follow-up-pending</span>
+              <span style="font-size:11px; color:var(--muted);">Replied positively, scheduling still TBD</span>
+            </div>
+          </div>
+          <hr>
+          <div style="margin-top:12px; margin-bottom:12px;">
+            <div style="font-size:10px; color:var(--muted); letter-spacing:1px; margin-bottom:6px;">COMMUNITY — SPORTS LEAGUE</div>
+            <div style="font-weight:600; color:var(--text); font-size:12px;">City Softball League — Spring 2026</div>
+            <div style="font-size:11px; color:var(--muted); margin-top:2px;">Contacted organizer 2026-03-12 · Attended trial session 2026-03-15</div>
+            <div style="margin-top:6px; display:flex; gap:8px; align-items:center;">
+              <span class="status status-prog">in-progress</span>
+              <span style="font-size:11px; color:var(--muted);">Attended, waiting to be added to team group chat</span>
+            </div>
+          </div>
+          <hr>
+          <div style="margin-top:12px;">
+            <div style="font-size:10px; color:var(--muted); letter-spacing:1px; margin-bottom:6px;">NETWORKING — DO NOT RECOMMEND</div>
+            <div style="font-weight:600; color:var(--text); font-size:12px;">Startup Accelerator cold outreach</div>
+            <div style="margin-top:6px; display:flex; gap:8px; align-items:center;">
+              <span class="status status-close">closed</span>
+              <span style="font-size:11px; color:var(--muted);">No response after 2 follow-ups — move on</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SLIDE 9 — MEMORY SYSTEM
+═══════════════════════════════════════════════════ -->
+<div class="slide" id="s9">
+  <div class="slide-inner">
+    <div class="slide-label">Feature 06</div>
+    <h2 style="margin-bottom:6px;">Persistent Memory System</h2>
+    <p style="margin-bottom:20px; font-size:13px;">Every session builds on the last. The system knows you — your goals, history, relationships, and decisions.</p>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; margin-bottom:16px;">
+      <div class="card" style="border-left:3px solid var(--blue);">
+        <div style="font-size:18px; margin-bottom:8px;">👤</div>
+        <h3 style="font-size:13px; color:var(--blue); margin-bottom:4px;">profile.md</h3>
+        <p style="font-size:12px;">Full life context — academic, social, personality, relationships, goals. Updated when new info is revealed.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--amber);">
+        <div style="font-size:18px; margin-bottom:8px;">💻</div>
+        <h3 style="font-size:13px; color:var(--amber); margin-bottom:4px;">cs-profile.md</h3>
+        <p style="font-size:12px;">Coding skills, weak spots, learning style, active project state. Tailors all CS advice to your actual level — not the average.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--green);">
+        <div style="font-size:18px; margin-bottom:8px;">📋</div>
+        <h3 style="font-size:13px; color:var(--green); margin-bottom:4px;">research-log.md</h3>
+        <p style="font-size:12px;">Running log of every advisory session — verdict, key findings, agents used. Prevents repeating advice.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--purple);">
+        <div style="font-size:18px; margin-bottom:8px;">📝</div>
+        <h3 style="font-size:13px; color:var(--purple); margin-bottom:4px;">decisions.md</h3>
+        <p style="font-size:12px;">Append-only log of major decisions and rationale. Never deleted. Full audit trail of choices made.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--rose);">
+        <div style="font-size:18px; margin-bottom:8px;">📤</div>
+        <h3 style="font-size:13px; color:var(--rose); margin-bottom:4px;">outreach-tracker.md</h3>
+        <p style="font-size:12px;">All emails, contacts, status tracking. Read by every agent before giving social/activity advice.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--teal);">
+        <div style="font-size:18px; margin-bottom:8px;">🔖</div>
+        <h3 style="font-size:13px; color:var(--teal); margin-bottom:4px;">open-questions.md</h3>
+        <p style="font-size:12px;">Unresolved questions from research. Timestamped. Reviewed during <code>/memory-consolidate</code>.</p>
+      </div>
+    </div>
+
+    <div style="padding:14px 20px; background:var(--surface); border-radius:8px; border:1px solid var(--border);">
+      <p style="font-size:12px; color:var(--muted); text-align:center;">
+        Memory is always read <strong style="color:var(--text);">first</strong> — before any research, any advice, any action.
+        The system never starts from zero.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SLIDE 10 — TACTICAL PLANNING
+═══════════════════════════════════════════════════ -->
+<div class="slide" id="s10">
+  <div class="slide-inner">
+    <div class="slide-label">Feature 07</div>
+    <h2 style="margin-bottom:6px;">Tactical Planning <code style="font-size:18px;">/tactical</code></h2>
+    <p style="margin-bottom:20px; font-size:13px;">Situation-specific playbooks — exact scripts, timing, and failure modes for specific real-life moments.</p>
+
+    <div class="two-col">
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div class="card" style="border-left:3px solid var(--teal);">
+          <h3 style="font-size:13px; color:var(--teal); margin-bottom:6px;">Specific, Not Generic</h3>
+          <p style="font-size:12px;">"How do I open the salary negotiation?" gets a real script with exact wording — not "be confident and know your worth."</p>
+        </div>
+        <div class="card" style="border-left:3px solid var(--purple);">
+          <h3 style="font-size:13px; color:var(--purple); margin-bottom:6px;">Social Contract Awareness</h3>
+          <p style="font-size:12px;">Always asks: who initiated this occasion? Flags transactional risk. Never uses someone's goodwill as a platform for a pitch.</p>
+        </div>
+        <div class="card" style="border-left:3px solid var(--rose);">
+          <h3 style="font-size:13px; color:var(--rose); margin-bottom:6px;">Failure Mode Mapping</h3>
+          <p style="font-size:12px;">Lists what goes wrong if you do it wrong — not just what to do. Treats your social instincts as a data point, not a final verdict.</p>
+        </div>
+        <div class="card" style="border-left:3px solid var(--amber);">
+          <h3 style="font-size:13px; color:var(--amber); margin-bottom:6px;">Clarifies Goal First</h3>
+          <p style="font-size:12px;">"What does good look like from this conversation?" — always asked before drafting anything. Outcome shapes the script entirely.</p>
+        </div>
+      </div>
+
+      <div class="snapshot">
+        <div class="snapshot-bar">
+          <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
+          <span style="margin-left:6px;">/tactical — salary negotiation first call</span>
+        </div>
+        <div class="snapshot-body-scroll">
+          <div style="color:var(--teal); font-weight:600; margin-bottom:10px;">⚡ Tactical: Salary Negotiation Call</div>
+
+          <div style="color:var(--muted); font-size:10px; letter-spacing:1px; margin-bottom:4px;">THE OPENER (exact wording)</div>
+          <div style="background:var(--surface2); border-radius:6px; padding:10px 12px; margin-bottom:12px; border-left:2px solid var(--teal);">
+            <div class="val" style="font-size:12px;">"I'm really excited about this role — I do want to discuss the comp package before I sign. Is there flexibility on base?"</div>
+          </div>
+
+          <div style="color:var(--muted); font-size:10px; letter-spacing:1px; margin-bottom:4px;">WHY THIS WORDING</div>
+          <div class="val" style="font-size:12px; margin-bottom:10px;">Leads with enthusiasm — not entitlement. "Is there flexibility" is softer than "I want more" but still opens the door. Never name a number first — let them move first.</div>
+
+          <hr>
+
+          <div style="color:var(--muted); font-size:10px; letter-spacing:1px; margin-top:10px; margin-bottom:4px;">FAILURE MODES</div>
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <div class="val" style="font-size:12px;">✗ Apologising for asking ("sorry to bring this up")</div>
+            <div class="val" style="font-size:12px;">✗ Giving a range — they'll always anchor to the low end</div>
+            <div class="val" style="font-size:12px;">✗ Accepting the first counter without a 24hr think window</div>
+            <div class="val" style="font-size:12px;">✗ Negotiating via email — harder to read tone and respond live</div>
+          </div>
+
+          <hr>
+
+          <div style="color:var(--muted); font-size:10px; letter-spacing:1px; margin-top:10px; margin-bottom:4px;">IF THEY PUSH BACK</div>
+          <div class="val" style="font-size:12px;">"I understand — could we look at the equity or signing bonus instead?" Always have a second axis to negotiate on.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SLIDE 11 — STATS / IMPACT
+═══════════════════════════════════════════════════ -->
+<div class="slide" id="s11">
+  <div class="slide-inner" style="text-align:center;">
+    <div class="slide-label">The Numbers</div>
+    <h2 style="margin-bottom:28px;">System at a glance</h2>
+
+    <div class="grid-4" style="margin-bottom:24px;">
+      <div class="stat-box">
+        <div class="stat-num accent-blue">20+</div>
+        <div class="stat-label">Research Topics<br>Covered</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num accent-purple">6</div>
+        <div class="stat-label">Specialized<br>AI Agents</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num accent-green">15+</div>
+        <div class="stat-label">Persistent<br>Memory Files</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num accent-amber">0</div>
+        <div class="stat-label">Generic Advice<br>Given</div>
+      </div>
+    </div>
+
+    <div class="grid-3" style="margin-bottom:24px;">
+      <div style="padding:16px; background:var(--surface); border-radius:10px; border:1px solid var(--border); border-left:3px solid var(--blue);">
+        <h3 style="font-size:13px; color:var(--blue); margin-bottom:6px;">SOCIAL</h3>
+        <p style="font-size:12px; color:var(--muted);">Dating, friendships, belonging, community building, social confidence and relationship strategy</p>
+      </div>
+      <div style="padding:16px; background:var(--surface); border-radius:10px; border:1px solid var(--border); border-left:3px solid var(--amber);">
+        <h3 style="font-size:13px; color:var(--amber); margin-bottom:6px;">CAREER</h3>
+        <p style="font-size:12px; color:var(--muted);">Internship and job strategy, immigration pathways, CS skills roadmap, mentor network, offer negotiation</p>
+      </div>
+      <div style="padding:16px; background:var(--surface); border-radius:10px; border:1px solid var(--border); border-left:3px solid var(--green);">
+        <h3 style="font-size:13px; color:var(--green); margin-bottom:6px;">PERSONAL GROWTH</h3>
+        <p style="font-size:12px; color:var(--muted);">Mindset, resilience, health, productivity, long-term life architecture and decision frameworks</p>
+      </div>
+    </div>
+
+    <div style="padding:18px 28px; background:linear-gradient(135deg, var(--blue-dim), var(--purple-dim)); border-radius:10px; border:1px solid var(--border); display:inline-block; max-width:600px;">
+      <p style="font-size:14px; color:var(--text); font-style:italic; line-height:1.7;">
+        "This isn't just a chatbot. It's a system that knows your history, checks your blind spots, tracks your actions, and gives you the honest answer — not the comfortable one."
+      </p>
+      <p style="font-size:12px; color:var(--muted); margin-top:8px;">— Personal Advisory System · 2026</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     NAVIGATION
+═══════════════════════════════════════════════════ -->
+<div id="nav">
+  <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">↑</button>
+  <div id="dots"></div>
+  <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">↓</button>
+</div>
+
+<script>
+  const totalSlides = 11;
+  let current = 0;
+
+  const slides = document.querySelectorAll('.slide');
+  const dotsContainer = document.getElementById('dots');
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+
+  // Build dots
+  for (let i = 0; i < totalSlides; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsContainer.appendChild(d);
+  }
+
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    document.querySelectorAll('.dot')[current].classList.remove('active');
+    current = Math.max(0, Math.min(n, totalSlides - 1));
+    slides[current].classList.add('active');
+    document.querySelectorAll('.dot')[current].classList.add('active');
+    counter.textContent = `${current + 1} / ${totalSlides}`;
+    progress.style.width = `${((current + 1) / totalSlides) * 100}%`;
+  }
+
+  function changeSlide(dir) { goTo(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
+  });
+
+  // Init progress
+  progress.style.width = `${(1 / totalSlides) * 100}%`;
+</script>
+</body>
+</html>

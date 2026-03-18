@@ -1,0 +1,19 @@
+# Claude Code
+.claude/settings.local.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Personal data — never commit these
+# Uncomment if you accidentally filled these in with real data
+# memory/profile.md
+# memory/research-log.md
+# memory/decisions.md
+# memory/nudges.md
+# memory/open-questions.md
+# memory/outreach-tracker.md
+# memory/cs-profile.md
+
+# All research outputs (personal advisory sessions)
+research/*/
