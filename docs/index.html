@@ -361,11 +361,14 @@
             <div><span class="prompt">user →</span> <span class="val">"Should I take the startup offer or wait for big tech?"</span></div>
             <div style="margin-top:10px;"><span class="muted">Orchestrator classifies: </span><code>COMPLEX</code></div>
             <div style="margin-top:8px;">
-              <div class="muted">Dispatching agents in parallel...</div>
-              <div style="margin-top:4px; display:flex; gap:6px; flex-wrap:wrap;">
+              <div class="muted">Dispatching agents sequentially...</div>
+              <div style="margin-top:6px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:11px;">
                 <span class="badge badge-blue">rd-researcher</span>
+                <span style="color:var(--muted);">→</span>
                 <span class="badge badge-amber">cost-analyst</span>
+                <span style="color:var(--muted);">→</span>
                 <span class="badge badge-rose">emotional-check</span>
+                <span style="color:var(--muted);">→</span>
                 <span class="badge badge-purple">synthesizer</span>
               </div>
             </div>
@@ -407,7 +410,7 @@
       </div>
       <div class="agent-card" style="border-left-color:var(--rose);">
         <h3 style="color:var(--rose);">💙 Social Advisor</h3>
-        <p>Dating strategy, friendships, loneliness, social confidence, relationship dynamics. Warm but brutally honest.</p>
+        <p>Dating strategy, friendships, connection-building, social confidence, relationship dynamics. Warm but brutally honest.</p>
         <div style="margin-top:10px;"><code>emotional-check</code></div>
       </div>
       <div class="agent-card" style="border-left-color:var(--amber);">

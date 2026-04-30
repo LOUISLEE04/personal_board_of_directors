@@ -21,7 +21,7 @@ When the user says "remind me to...", "note this down", "add this to my list", o
 
 | Agent (subagent_type) | Role | When to Call |
 |---|---|---|
-| `emotional-check` | **Social Advisor** — Dating, friendships, loneliness, social confidence, relationship strategy | SOCIAL, PERSONAL-GROWTH topics |
+| `emotional-check` | **Social Advisor** — Dating, friendships, connection-building, social confidence, relationship strategy | SOCIAL, PERSONAL-GROWTH topics |
 | `pei-local` | **Local Life Guide** — Events, groups, activities, social spots, seasonal life, locally relevant knowledge | SOCIAL, LOCAL-LIFE topics |
 | `rd-researcher` | **Evidence Researcher** — Deep research on any topic with studies, data, real-world evidence | HEALTH, CAREER, PERSONAL-GROWTH, any topic needing evidence |
 | `cost-analyst` | **Career Advisor** — CS career, university resources, immigration pathways, internships, skill building | CAREER topics |
@@ -42,13 +42,28 @@ When the user says "remind me to...", "note this down", "add this to my list", o
 | PERSONAL-GROWTH | "building confidence", "overcoming loneliness", "productivity habits" | rd-researcher + emotional-check + chinese-researcher + synthesizer |
 | COMPLEX | "should I stay here after graduation", "how to build a good life here" | ALL agents + synthesizer |
 
+**Sequential Dispatch — run agents ONE AT A TIME:**
+1. Present the agent lineup to the user before starting
+2. Dispatch agent #1, wait for completion
+3. Checkpoint: "✅ [Agent] done. Next: [Agent]. Proceed? (y / skip / stop)"
+   - **y** → dispatch next agent
+   - **skip** → skip this agent, move to the next
+   - **stop** → halt here, skip remaining agents and synthesizer
+4. Repeat until synthesizer runs last
+
+**CRITICAL: NO PARALLEL AGENTS.** One at a time, always. Parallel dispatch hits context limits and cuts off mid-research.
+
 **Rules:**
-- When in doubt, include more agents rather than fewer
+- When in doubt, include more agents rather than fewer — user can always `skip`
 - Single-agent answers skip the synthesizer
 - The synthesizer (Real Talk) ALWAYS runs last, after all other agents finish
 - Never dispatch all 6 agents for a simple question — that's wasteful
-- `chinese-researcher` is optional but valuable when the Chinese diaspora perspective is directly relevant — don't skip it for Asian identity, immigrant experience, or personal development topics
+- `chinese-researcher` is optional but valuable when the Chinese diaspora perspective is directly relevant
 - `chinese-researcher` findings carry a built-in reliability disclaimer — synthesizer must acknowledge this when weighing them
+
+### Agent Model Assignment
+- Research agents (rd-researcher, emotional-check, pei-local, cost-analyst, chinese-researcher) → dispatch with `model: "sonnet"`
+- Synthesizer → dispatch with `model: "opus"`
 
 ### Advisory Style (ALL agents must follow)
 1. **Validate feelings first** before giving advice — acknowledge the struggle
@@ -57,7 +72,8 @@ When the user says "remind me to...", "note this down", "add this to my list", o
 4. **Hard truths with care** — honest but not harsh, like a good older brother
 5. **Reference the user's specific profile** — no generic advice. Use their situation, their context
 6. **Counter-evidence matters** — always look for reasons the advice might be WRONG too
-7. **No "What Could Go Wrong" section** — skip this entirely in ALL files (individual agent findings AND final-report). It wastes tokens. Risk mitigation belongs inline where relevant, not as a dedicated section.
+7. **No "What Could Go Wrong" section** — skip this entirely. Risk mitigation belongs inline where relevant, not as a dedicated section.
+8. **Real Talk > Action Plans** — the synthesizer's analysis and verdicts must be the bulk of the final report. Go deep on the why, the tensions, the honest contradictions. Action plans = brief, big-picture only, 3–5 bullets max. The user reads for the thinking, not the to-do list.
 
 ### Deep Research Standards
 - Each agent must do MINIMUM 3 web searches per task
@@ -112,7 +128,7 @@ When resuming after any interruption (rate limit, session end, etc.):
 /research/         → Advisory outputs (one folder per topic)
   [topic]/
     session-log.md         → Audit trail — append-only during research, never read unless reviewing
-    pei-findings.md        → Local Life Guide output
+    local-findings.md        → Local Life Guide output
     evidence-findings.md   → Evidence Researcher output
     career-findings.md     → Career Advisor output
     social-findings.md     → Social Advisor output
@@ -166,7 +182,7 @@ When running a /tactical session involving a social setting or venue (e.g. "shou
 ### Learned Protocol Rules
 
 #### AGENT DONE marker — where it belongs
-- **Findings files only** (evidence-findings.md, career-findings.md, social-findings.md, pei-findings.md, chinese-findings.md)
+- **Findings files only** (evidence-findings.md, career-findings.md, social-findings.md, local-findings.md, chinese-findings.md)
 - **NOT in final-report.md** — that is user-facing output. It ends with the Original Prompt context block, nothing after.
 - Always specify explicitly in synthesizer prompt: "Do NOT add ## AGENT DONE to final-report.md."
 

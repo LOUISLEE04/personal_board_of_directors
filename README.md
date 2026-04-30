@@ -72,7 +72,7 @@ claude
 
 | Advisor | Role |
 |---------|------|
-| **Social Advisor** | Dating, friendships, loneliness, social confidence, relationship strategy |
+| **Social Advisor** | Dating, friendships, connection-building, social confidence, relationship strategy |
 | **Local Life Guide** | Events, groups, activities, social spots, local community knowledge |
 | **Evidence Researcher** | Studies, data, expert sources on any topic — goes 8–10 searches deep |
 | **Career Advisor** | CS career, university resources, immigration pathways, internship strategy |
@@ -132,7 +132,7 @@ research/
     ├── evidence-findings.md  # Evidence Researcher output
     ├── social-findings.md    # Social Advisor output
     ├── career-findings.md    # Career Advisor output
-    ├── pei-findings.md       # Local Life Guide output
+    ├── local-findings.md     # Local Life Guide output
     ├── chinese-findings.md   # Chinese Internet Researcher output
     └── final-report.md       # Real Talk final verdict
 ```
