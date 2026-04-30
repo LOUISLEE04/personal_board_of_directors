@@ -31,16 +31,21 @@ cd personal-board-of-directors
 
 No dependencies to install. That's it.
 
-### Fill In Your Profile
-
-Open `memory/profile.md` and fill in your details honestly. The more context you give, the better your advisors perform. **This file stays on your machine — it's in `.gitignore` by default once you've personalised it.**
-
-### Start Using It
+### Set Up Your Profile
 
 ```bash
 # Launch Claude Code in the project folder
 claude
 
+# Run the interactive setup — builds your profile through conversation
+/init
+```
+
+Your advisors need context to give you non-generic advice. `/init` walks you through it conversationally — takes about 5 minutes. Everything stays on your machine.
+
+### Start Using It
+
+```bash
 # Full multi-agent research on a life decision
 /research should I take the startup offer or wait for big tech
 
@@ -100,6 +105,7 @@ Not every question needs all 6 advisors. The system classifies your question and
 
 | Command | What It Does |
 |---------|-------------|
+| `/init` | **Start here** — interactive setup that builds your profile through conversation |
 | `/research [topic]` | Full multi-advisor deep research with evidence and action plan |
 | `/quick-research [question]` | Light 1–2 advisor lookup for fast answers |
 | `/deep-dive [topic] — [angle]` | Go deeper on a specific aspect of a previous research topic |
